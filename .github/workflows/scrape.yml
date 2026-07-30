@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -38,16 +38,22 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          git add codes.json
-
-          if git diff --cached --quiet; then
+          # Exit if nothing changed
+          if git diff --quiet codes.json; then
             echo "No changes."
             exit 0
           fi
 
-          git commit -m "Update ZZZ codes"
+          # Save local changes
+          git stash push -m "scraper-update"
 
-          # Rebase onto the latest main in case new commits were pushed
+          # Update local branch
           git pull --rebase origin main
+
+          # Restore changes
+          git stash pop || true
+
+          git add codes.json
+          git commit -m "Update ZZZ codes"
 
           git push origin HEAD:main
