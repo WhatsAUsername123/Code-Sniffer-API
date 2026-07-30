@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: zzz-code-checker
+  cancel-in-progress: false
+
 jobs:
   check-codes:
     runs-on: ubuntu-latest
@@ -15,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -31,8 +37,7 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          git config --global rebase.autoStash true
-          
+
           git add codes.json
 
           if git diff --cached --quiet; then
@@ -40,6 +45,9 @@ jobs:
             exit 0
           fi
 
-          git pull --rebase origin main
           git commit -m "Update ZZZ codes"
+
+          # Rebase onto the latest main in case new commits were pushed
+          git pull --rebase origin main
+
           git push origin HEAD:main
